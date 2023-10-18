@@ -1,8 +1,35 @@
 # Sorting Algorithm Visualizer
 
-<div align="center">
-  <img src="resources/demo.gif" alt="Visualizer Demo">
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  .container {
+    max-width: 100%;
+    margin: auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+  }
+  .center {
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="center">
+    <img src="resources/visualizer_demo.gif" alt="Visualizer Demo">
+  </div>
+
+  <h1 class="center">Sorting Algorithm Visualizer</h1>
+  
+  <p>The Sorting Algorithm Visualizer is a Java-based program that provides a graphical user interface (GUI) for visualizing various sorting algorithms in real-time. Users can interact with the visualizer to observe the sorting process, customize parameters, and control the sorting animations.</p>
 </div>
+
+</body>
+</html>
+
 
 The Sorting Algorithm Visualizer is a Java-based program that provides a graphical user interface (GUI) for visualizing various sorting algorithms in real-time. Users can interact with the visualizer to observe the sorting process, customize parameters, and control the sorting animations.
 

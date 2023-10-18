@@ -1,5 +1,4 @@
 # Sorting Algorithm Visualizer
-
 <div align="center">
   <img src="resources/demo.gif" alt="Visualizer Demo">
 </div>
@@ -58,10 +57,10 @@ To run the Sorting Algorithm Visualizer on your machine, follow these steps:
 2. **Clone the Repository**: Clone this GitHub repository to your local machine.
 
     ```bash
-    git clone https://github.com/your-username/visualizer.git
+    git clone https://github.com/r-802/Sorting-Algorithm-Visualizer.git
     ```
 
-3. **Compile and Run**: Navigate to the project directory and compile the code using your preferred Java compiler. Run the `Visualizer` class to start the program.
+3. **Compile and Run**: Navigate to the project directory in your command prompt or terminal and compile the code using your preferred Java compiler. Then, run the `Visualizer` class to start the program.
 
     ```bash
     javac Visualizer.java
@@ -69,6 +68,9 @@ To run the Sorting Algorithm Visualizer on your machine, follow these steps:
     ```
 
 4. **Use the GUI**: Once the program is running, use the graphical user interface to select a sorting algorithm, customize settings, and control the animation.
+
+Or simply open the `Visualizer.java` file and run it directly from your IDE.
+
 
 ## User Interface
 
@@ -93,6 +95,15 @@ The user interface of the Sorting Algorithm Visualizer consists of the following
 - Adjust the number of elements in the array using the "Number of Elements" slider.
 
 - Control the animation speed with the "Animation Speed" slider.
+
+## Todo/Future Improvements
+- [ ] Add sound!!!
+- [ ] Improve error handling and provide more informative error messages.
+- [ ] Enhance the user interface with additional customization options.
+- [ ] Optimize the rendering performance for larger data sets.
+- [ ] Expand the range of supported sorting algorithms.
+
+Feel free to contribute or suggest improvements to this project by opening issues or pull requests!
 
 ## Contributing
 

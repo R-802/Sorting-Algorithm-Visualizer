@@ -100,7 +100,3 @@ Contributions to the Sorting Algorithm Visualizer project are welcome! If you wo
 ## License
 
 This program is open-source and available under the [MIT License](LICENSE). Feel free to use and modify it for your educational or personal projects.
-
----
-
-We hope you enjoy using the Sorting Algorithm Visualizer to explore and learn about various sorting algorithms in a visual and interactive way. If you have any questions or feedback, please don't hesitate to reach out to us. Happy sorting!

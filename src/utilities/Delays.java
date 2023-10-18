@@ -7,9 +7,9 @@ import main.Controller;
  */
 final public class Delays {
     // Animation Delays in milliseconds
-    private static final int minAnimationDelay = 1;
-    private static final int maxAnimationDelay = 250;
-    private static int animationSpeed;
+    private static final int minAnimationDelay = 0;
+    private static final int maxAnimationDelay = 150;
+    private static int animationSpeed = 50;
 
     /**
      * Introduces a delay that depends on the number of elements being sorted and the current animation speed.
@@ -30,53 +30,46 @@ final public class Delays {
      * and the current animation speed, then multiplied by the provided delayMultiplier.
      *
      * @param delayMultiplier The multiplier for adjusting the delay duration.
+     * @return
      * @throws RuntimeException if the sleep operation is interrupted.
      */
-    public static void sleep(Controller controller, double delayMultiplier) {
+    public static long sleep(Controller controller, double delayMultiplier) {
         try {
             Thread.sleep(sleepTime(controller, delayMultiplier));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        return 0;
     }
 
     /**
-     * Computes a sleep time (delay) that is inversely proportional to the square root
-     * of the number of elements being sorted. This delay is bound by specified minimum and maximum delay values.
+     * Calculates the interpolated delay based on the provided adaptive delay,
+     * taking into account the current animation speed and delayMultiplier.
      *
-     * @return The computed delay in milliseconds.
-     */
-    private static int sleepTime(final Controller controller) {
-        int adaptiveDelay = (int) (maxAnimationDelay / Math.sqrt(controller.numberOfElements));
-        int adjustedDelay = interpolateDelay(adaptiveDelay);
-        return Math.max(minAnimationDelay, Math.min(adjustedDelay, maxAnimationDelay));
-    }
-
-    /**
-     * Computes a sleep time (delay) for algorithms that might run too fast. This is based on the number of elements
-     * being sorted and the current animation speed. The computed delay is then multiplied by the given delayMultiplier.
-     *
+     * @param controller      The Controller instance.
      * @param delayMultiplier The multiplier for adjusting the delay duration.
-     * @return The computed delay in milliseconds after applying the delayMultiplier.
-     */
-    public static int sleepTime(final Controller controller, double delayMultiplier) {
-        int adaptiveDelay = (int) (maxAnimationDelay / Math.sqrt(controller.numberOfElements));
-        int adjustedDelay = interpolateDelay(adaptiveDelay);
-
-        // Apply the delay multiplier
-        adjustedDelay *= (int) delayMultiplier;
-        return Math.max(minAnimationDelay, Math.min(adjustedDelay, maxAnimationDelay));
-    }
-
-    /**
-     * Calculates an interpolated delay based on the provided adaptive delay.
-     * The interpolation is done considering the current animation speed.
-     *
-     * @param adaptiveDelay The base delay that should be interpolated.
      * @return The interpolated delay in milliseconds.
      */
-    private static int interpolateDelay(int adaptiveDelay) {
-        return ((100 - animationSpeed) * adaptiveDelay + (animationSpeed * minAnimationDelay) / 100);
+    private static int sleepTime(final Controller controller, double delayMultiplier) {
+        int adjustedDelay = interpolateDelay(controller.numberOfElements);
+
+        // Apply the delay multiplier
+        adjustedDelay = (int) (adjustedDelay * delayMultiplier);
+        System.out.println();
+        return Math.max(minAnimationDelay, Math.min(adjustedDelay, maxAnimationDelay));
+    }
+
+    /**
+     * Calculates an interpolated delay based on the number of elements.
+     * The interpolation is done while considering the current animation speed.
+     * The delay will interpolate between minAnimationDelay and maxAnimationDelay based on the animationSpeed.
+     *
+     * @param numberOfElements The number of elements in the array.
+     * @return The interpolated delay in milliseconds.
+     */
+    private static int interpolateDelay(int numberOfElements) {
+        double baseDelay = maxAnimationDelay / Math.sqrt(numberOfElements);
+        return (int) (minAnimationDelay + ((baseDelay - minAnimationDelay) * (animationSpeed / 100.0)));
     }
 
     /*---------------Setters----------------*/
@@ -94,12 +87,4 @@ final public class Delays {
         animationSpeed = speed;
     }
 
-    /**
-     * Gets the current animation speed.
-     *
-     * @return The current animation speed.
-     */
-    public static int getAnimationSpeed(int speed) {
-        return animationSpeed;
-    }
 }

@@ -2,8 +2,9 @@ package sorts;
 
 import interfaces.Sort;
 import main.Controller;
+import utilities.Operations;
 
-import static utilities.Operations.swap;
+import static utilities.Delays.sleep;
 
 public class BogoSort implements Sort {
     @Override
@@ -11,7 +12,7 @@ public class BogoSort implements Sort {
         while (!isSorted(c)) {
             if (c.stopSort) return;
             for (int i = 0; i < c.numberOfElements; i++) {
-                swap(c, i, (int) (Math.random() * c.numberOfElements));
+                Operations.swap(c, i, (int) (Math.random() * c.numberOfElements));
             }
         }
     }
@@ -23,7 +24,7 @@ public class BogoSort implements Sort {
         for (int i = 1; i < length; i++) {
             c.highlighted.set(1, i);
             c.highlighted.set(2, i - 1);
-
+            sleep(c, 1);
             // If the current element is less than the previous one, the array is not sorted.
             if (c.array[i] < c.array[i - 1]) {
                 return false;

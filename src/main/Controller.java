@@ -4,7 +4,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 /**
- * The `Controller` class manages the state and properties of the sorting process
+ * The Controller class manages the state and properties of the sorting process
  * and provides methods to control and monitor it.
  */
 public class Controller {
@@ -15,8 +15,8 @@ public class Controller {
 
     // Metrics
     public int numberOfElements;
-    public long arrayAccesses; // Count of array accesses
-    public long comparisons; // Count of comparisons
+    public long arrayAccesses;
+    public long comparisons;
 
     // Flags for controlling sorting and UI interaction
     public volatile boolean pauseSort = false; // Pause flag for sorting
@@ -44,15 +44,6 @@ public class Controller {
         for (int i = 0; i < numberOfElements; i++) {
             highlighted.set(i, -1);
         }
-    }
-
-    /**
-     * Gets the current number of elements in the array.
-     *
-     * @return The number of elements in the array.
-     */
-    public int getNumberOfElements() {
-        return numberOfElements;
     }
 
     /**

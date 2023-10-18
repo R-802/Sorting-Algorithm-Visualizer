@@ -2,8 +2,9 @@ package sorts;
 
 import interfaces.Sort;
 import main.Controller;
+import utilities.Operations;
 
-import static utilities.Operations.swap;
+import static utilities.Delays.sleep;
 
 public class InsertionSort implements Sort {
     @Override
@@ -15,8 +16,9 @@ public class InsertionSort implements Sort {
             c.highlighted.set(2, -5);
             while (pos > 0 && c.array[pos] <= c.array[pos - 1]) {
                 c.comparisons += 2;
+                sleep(c, 1);
                 if (c.stopSort) return;
-                swap(c, pos, pos - 1, 0.02);
+                Operations.swap(c, pos, pos - 1);
                 pos--;
             }
         }

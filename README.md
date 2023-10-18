@@ -1,7 +1,5 @@
 # Sorting Algorithm Visualizer
 
-![Visualizer Demo](resources/demo.gif)
-
 <div align="center">
   <img src="resources/demo.gif" alt="Visualizer Demo">
 </div>

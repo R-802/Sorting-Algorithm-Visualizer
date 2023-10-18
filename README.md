@@ -99,10 +99,10 @@ The user interface of the Sorting Algorithm Visualizer consists of the following
 ## Todo/Future Improvements
 - [ ] Add sound!!!
 - [ ] Fix the glitch on divider adjustment.
-- [ ] Fix animation speed isn't.
-- [ ] Currently pause, doesn't pause program instantly.
+- [ ] Fix animation speed.
+- [ ] Currently pause doesn't pause the program instantly, lota glitches there.
 - [ ] Expand the range of supported sorting algorithms.
-- [ ] Find a different mechanism to select sorting algorithms. Fine for now, but we'll eventually run out of room for the buttons  
+- [ ] Find a different mechanism to select sorting algorithms. Fine for now, but we'll eventually run out of button room.  
 
 Feel free to contribute or suggest improvements to this project by opening issues or pull requests!
 

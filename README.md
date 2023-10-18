@@ -98,10 +98,11 @@ The user interface of the Sorting Algorithm Visualizer consists of the following
 
 ## Todo/Future Improvements
 - [ ] Add sound!!!
-- [ ] Improve error handling and provide more informative error messages.
-- [ ] Enhance the user interface with additional customization options.
-- [ ] Optimize the rendering performance for larger data sets.
+- [ ] Fix the glitch on divider adjustment.
+- [ ] Fix animation speed isn't.
+- [ ] Currently pause, doesn't pause program instantly.
 - [ ] Expand the range of supported sorting algorithms.
+- [ ] Find a different mechanism to select sorting algorithms. Fine for now, but we'll eventually run out of room for the buttons  
 
 Feel free to contribute or suggest improvements to this project by opening issues or pull requests!
 

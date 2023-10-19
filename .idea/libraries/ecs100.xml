@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="ecs100">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/ecs100.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

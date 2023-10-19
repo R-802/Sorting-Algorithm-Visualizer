@@ -4,6 +4,16 @@
 </div>
 The Sorting Algorithm Visualizer is a Java-based program that provides a graphical user interface (GUI) for visualizing various sorting algorithms in real-time. Users can interact with the visualizer to observe the sorting process, customize parameters, and control the sorting animations.
 
+## Todo/Improvements
+- [ ] Fix audio glitches on large numbers of elements
+- [ ] Fix sound on end of sort animation
+- [ ] Fix pause and resume functionality 
+- [ ] Fix the glitch on divider adjustment
+- [ ] Fix animation speed
+- [ ] Currently pause doesn't pause the program instantly, lota glitches there
+- [ ] Expand the range of supported sorting algorithms
+- [ ] Find a different mechanism to select sorting algorithms. Fine for now, but we'll eventually run out of button room. 
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -95,21 +105,3 @@ The user interface of the Sorting Algorithm Visualizer consists of the following
 - Adjust the number of elements in the array using the "Number of Elements" slider.
 
 - Control the animation speed with the "Animation Speed" slider.
-
-## Todo/Future Improvements
-- [ ] Add sound!!!
-- [ ] Fix the glitch on divider adjustment.
-- [ ] Fix animation speed.
-- [ ] Currently pause doesn't pause the program instantly, lota glitches there.
-- [ ] Expand the range of supported sorting algorithms.
-- [ ] Find a different mechanism to select sorting algorithms. Fine for now, but we'll eventually run out of button room.  
-
-Feel free to contribute or suggest improvements to this project by opening issues or pull requests!
-
-## Contributing
-
-Contributions to the Sorting Algorithm Visualizer project are welcome! If you would like to contribute, please follow the guidelines outlined in the [CONTRIBUTING.md](CONTRIBUTING.md) file.
-
-## License
-
-This program is open-source and available under the [MIT License](LICENSE). Feel free to use and modify it for your educational or personal projects.

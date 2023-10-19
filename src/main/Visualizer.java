@@ -11,6 +11,8 @@ import utilities.Operations;
 import javax.sound.midi.*;
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
 
 import static utilities.Delays.sleep;
 
@@ -31,25 +33,21 @@ import static utilities.Delays.sleep;
  * - Exception handling for robust execution.
  *
  * @author Shemaiah Rangitaawa
- * @version 1.0
+ * @version 1.1
  * @since 10/18/2023
  */
 public final class Visualizer {
-    // Graphics
     private static final int OVERLAY_X_OFFSET = 429; // TODO: Fix these offsets. Getting rid of them would be great
     private static final int OVERLAY_Y_OFFSET = 56;
-    private static Thread UIThread;
-
-    // Array
-    private static int initialLength = 50;
-    private static Controller controller = new Controller(initialLength);
-
-    // Visualizer
+    private static int INITIAL_LENGTH = 50;
+    private static final double MINIMUM_PITCH = 25;
+    private static final double MAXIMUM_PITCH = 100;
+    private static Controller controller = new Controller(INITIAL_LENGTH);
     private static String heading = "Sorting Algorithm Visualizer v1.0";
-
-    // Audio
     private static Thread audioThread;
-    private static MidiChannel midiChannel;
+    private static Thread UIThread;
+    private static Synthesizer synth;
+    private static MidiChannel channel;
 
     /*----------------Graphics Setup-----------------*/
 
@@ -62,7 +60,7 @@ public final class Visualizer {
         UI.initialise(); // Initialize UI and configure window properties
         // Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
         // UI.setWindowSize((int) size.getWidth() / 2, (int) size.getHeight() / 2);
-        UI.setWindowSize(1280, 720); // TODO: Adaptive window scaling
+        UI.setWindowSize(1280, 720); // TODO: Scale to users display
         UI.getFrame().setLocation(0, 0);
         UI.getFrame().setTitle("Sorting Algorithm Visualizer v1.0");
         UI.getFrame().setVisible(true);
@@ -77,14 +75,14 @@ public final class Visualizer {
         });
 
         // Slider modifies numberOfElements and reinitialized array
-        UI.addSlider("Number of Elements", 2, 2048, initialLength, (double newLength) -> {
+        UI.addSlider("Number of Elements", 2, 2048, INITIAL_LENGTH, (double newLength) -> {
             if (!controller.sorting) {
                 controller = new Controller((int) newLength);
                 initialize(controller.array);
                 startUIThread(); // Redisplay
             } else {
                 // Do not allow array adjustment during sorting
-                initialLength = controller.numberOfElements;
+                INITIAL_LENGTH = controller.numberOfElements;
                 UI.println("Cannot adjust during sort!");
             }
         });
@@ -121,13 +119,12 @@ public final class Visualizer {
         // Utilities
         UI.addButton("Pause", () -> { // TODO: Pause on click
             controller.pauseSort = true;
+            channel.allSoundOff();
             audioThread.interrupt();
-            midiChannel.allNotesOff();
             UI.printMessage("Paused");
         });
-        UI.addButton("Resume", () -> {
+        UI.addButton("Resume", () -> { // TODO: Fix sound and UI glitches
             controller.sorting = true;
-            startAudio();
             startUIThread();
             UI.printMessage("");
         });
@@ -139,7 +136,7 @@ public final class Visualizer {
         UI.addButton("Quit", UI::quit);
 
         // Draw the canvas and initiate the UI thread to handle UI updates
-        controller.setNumberOfElements(initialLength);
+        controller.setNumberOfElements(INITIAL_LENGTH);
         initialize(controller.array);
         startUIThread();
     }
@@ -227,45 +224,90 @@ public final class Visualizer {
 
     /*----------------Audio-----------------*/
 
+    /**
+     * Initializes and starts the audio system for playback.
+     * <p>
+     * This method does the following:
+     * <ol>
+     *   <li>Closes any previously opened synthesizer.</li>
+     *   <li>Loads a specific sound font (Perfect Sine.sf2).</li>
+     *   <li>Initializes a synthesizer and opens it.</li>
+     *   <li>Loads the first instrument from the sound font into the synthesizer.</li>
+     *   <li>Sets the loaded instrument for the main MIDI channel.</li>
+     *   <li>Turns off the reverb and sustain effects on the main channel.</li>
+     *   <li>Starts an audio thread for managing the note playback.</li>
+     * </ol>
+     */
     public static void startAudio() {
-        Synthesizer synth;
-        try {
+        if (synth != null && synth.isOpen()) {
+            synth.close(); // Close any previously opened synthesizer
+        }
+
+        // Load sound font
+        try (InputStream stream = Visualizer.class.getResourceAsStream("/sound/Perfect Sine.sf2")) {
+            if (stream == null) {
+                throw new IOException("Couldn't find the sound resource.");
+            }
             synth = MidiSystem.getSynthesizer();
             synth.open();
-        } catch (MidiUnavailableException e) {
-            throw new RuntimeException(e);
-        }
-        synth.loadAllInstruments(synth.getDefaultSoundbank());
-        midiChannel = synth.getChannels()[0];
-        for (Instrument i : synth.getLoadedInstruments()) {
-            if (i.getName().toLowerCase().trim().contains("sine")) {
-                midiChannel.programChange(i.getPatch().getProgram());
-                break;
+            Soundbank soundbank = MidiSystem.getSoundbank(stream);
+            Instrument instrument = soundbank.getInstruments()[0];
+            if (!synth.loadInstrument(instrument)) {
+                throw new InvalidMidiDataException("Unable to load the instrument.");
             }
+            channel = synth.getChannels()[0];
+            channel.programChange(instrument.getPatch().getProgram());
+            channel.controlChange(91, 0); // Turn off reverb
+            channel.controlChange(64, 0);  // Turn off sustain
+            startAudioThread();
+        } catch (MidiUnavailableException e) {
+            JOptionPane.showMessageDialog(null, e.getMessage() + ": The MIDI device is unavailable. Sound is disabled.");
+        } catch (IOException | InvalidMidiDataException e) {
+            JOptionPane.showMessageDialog(null, e.getMessage() + ". Sound is disabled.");
         }
-        UI.println(midiChannel.getProgram());
-        startAudioThread(midiChannel);
     }
 
-    private static void startAudioThread(MidiChannel channel) {
+    /**
+     * Initializes and starts the audio thread for playback.
+     * <p>
+     * The audio thread continuously monitors the state of the controller. For each highlighted element, the method calculates:
+     * <ul>
+     *   <li>The normalized value of the element.</li>
+     *   <li>The desired pitch based on the normalized value.</li>
+     *   <li>Base pitch and pitch bend values derived from the desired pitch.</li>
+     *   <li>MIDI velocity based on the difference between the maximum pitch and base pitch.</li>
+     * </ul>
+     * Once the desired note characteristics are calculated, the method starts playback of the note.
+     * To ensure that only a single note is played at any given time, the loop breaks after starting a note.
+     * The thread continues to play notes as long as the controller is sorting.
+     * </p>
+     */
+    private static void startAudioThread() {
         audioThread = new Thread(() -> {
-            while (!Thread.currentThread().isInterrupted() && controller.sorting) { // TODO: Toggle sound?
-                if (!controller.sorting) break; // exit loop if not sorting
+            while (controller.sorting) {
                 channel.allNotesOff();
-                int temp = 1;
                 for (int i : controller.highlighted) {
                     if (i != -1) {
-                        temp++;
-                        int clampedIndex = Math.min(Math.max(i, 0), controller.numberOfElements - 1);
-                        int pitch = (int) Math.round((double) controller.array[clampedIndex] / controller.numberOfElements * 80);
-                        int velocity = (int) (64.0 / Math.pow(temp, 0.25));
-                        channel.controlChange(91, 10);
-                        channel.noteOn(pitch, velocity);
+                        double normalizedValue = controller.array[Math.min(Math.max(i, 0), controller.numberOfElements - 1)] / (double) controller.numberOfElements;
+                        double calculatedPitch = normalizedValue * (MAXIMUM_PITCH - MINIMUM_PITCH) + MINIMUM_PITCH;
+                        int basePitch = (int) calculatedPitch;
+                        int pitchBendValue = (int) ((calculatedPitch - basePitch) * 8192d) + 8192; // In MIDI, 8192 is the center pitch bend value (no pitch bend)
+
+                        // Compute MIDI velocity based on pitch difference and number of controller elements.
+                        int velocity = (int) (Math.pow(MAXIMUM_PITCH - basePitch, 2d) * Math.pow(controller.numberOfElements, -0.25) * 32d);
+                        channel.setPitchBend(pitchBendValue);
+                        channel.noteOn(basePitch, velocity);
+                        break; // Ensure only one note is played. Break after starting a note
                     }
                 }
+                sleep(controller, 1);
             }
         });
         audioThread.start();
+    }
+
+    private static void stopAudioThread() {
+        audioThread.interrupt();
     }
 
     /*----------------Array-----------------*/
@@ -276,17 +318,15 @@ public final class Visualizer {
      * and prepares the system for a new sorting operation.
      *
      * @throws RuntimeException if an InterruptedException occurs during the completion animation.
-     * @implNote If the sorting process is paused, this method allows resetting to occur.
-     * If sorting has completed or hasn't started, it performs the reset.
      */
-    private static void reset() { // TODO: Allow reset during pause? Don't revert highlight color
+    private static void reset() { // TODO: Reset during pause? Don't reset highlight color
         controller.clearHighlights();
+        channel.allSoundOff();
 
         // If we've completed sorting
         if (controller.stopSort || !controller.sorting) {
             try { // Show animation
                 completedSort();
-                midiChannel.allNotesOff();
                 Thread.sleep(1000); // Pause
             } catch (InterruptedException e) {
                 throw new RuntimeException();
@@ -295,6 +335,7 @@ public final class Visualizer {
 
         // Reset array, flags, and metrics
         stopUIThread();
+        stopAudioThread();
         controller.arrayAccesses = 0;
         controller.comparisons = 0;
         controller.stopSort = false;
@@ -309,12 +350,11 @@ public final class Visualizer {
      * representation of the sorted result.
      */
     private static void completedSort() {
-        // Perform the end-of-sort animation
         for (int i = 0; i < controller.numberOfElements; i++) {
             // Highlight the current element in the sorted array
             controller.highlighted.set(i, i);
             // controller.highlighted.set(0, i);
-            sleep(controller, 2);
+            sleep(controller);
         }
     }
 

@@ -31,17 +31,17 @@ import static utilities.Delays.sleep;
  * - Users can pause, resume, and customize the visualization.
  * - Provides real-time feedback on the sorting process.
  * - Exception handling for robust execution.
- *
- * @author Shemaiah Rangitaawa
- * @version 1.1
- * @since 10/18/2023
  */
 public final class Visualizer {
-    private static final int OVERLAY_X_OFFSET = 429; // TODO: Fix these offsets. Getting rid of them would be great
+    /**
+     * Offsets are valid for 1920 x 1080 display
+     */
+    private static final int OVERLAY_X_OFFSET = 436; // TODO: Remove these offsets.
     private static final int OVERLAY_Y_OFFSET = 56;
+    private static final double MINIMUM_PITCH = 30d;
+    private static final double MAXIMUM_PITCH = 100d;
+    private static final double PITCH_BEND = 8192d;  // In MIDI, 8192 is the center pitch bend value (disables pitch bend)
     private static int INITIAL_LENGTH = 50;
-    private static final double MINIMUM_PITCH = 25;
-    private static final double MAXIMUM_PITCH = 100;
     private static Controller controller = new Controller(INITIAL_LENGTH);
     private static String heading = "Sorting Algorithm Visualizer v1.0";
     private static Thread audioThread;
@@ -53,18 +53,22 @@ public final class Visualizer {
 
     /**
      * Sets up the graphical user interface (GUI) for the Sorting Algorithm Visualizer.
-     * This method initializes the UI framework, configures window properties, adds UI components
-     * like buttons and sliders, and handles user interactions for sorting and visualization.
+     * This method initializes the UI framework, configures window properties, adds UI components,
+     * and handles user interactions for sorting and visualization.
      */
     public static void setupGUI() {
         UI.initialise(); // Initialize UI and configure window properties
-        // Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
-        // UI.setWindowSize((int) size.getWidth() / 2, (int) size.getHeight() / 2);
-        UI.setWindowSize(1280, 720); // TODO: Scale to users display
-        UI.getFrame().setLocation(0, 0);
-        UI.getFrame().setTitle("Sorting Algorithm Visualizer v1.0");
-        UI.getFrame().setVisible(true);
-        UI.setDivider(0.2); // TODO: Fix overlay glitch on divider adjustment
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+        // Set the window to be three quarters of the screen's width and height
+        int width = (int) (screenSize.getWidth() * 0.75);
+        int height = (int) (screenSize.getHeight() * 0.75);
+        UI.setWindowSize(width, height);
+
+        // Center the window on the screen
+        int x = (int) ((screenSize.getWidth() - width) / 2);
+        int y = (int) ((screenSize.getHeight() - height) / 2);
+        UI.getFrame().setLocation(x / 2, y / 2);
 
         // Modify the color of the highlighted elements
         UI.addButton("Highlight Color", () -> {
@@ -87,12 +91,11 @@ public final class Visualizer {
             }
         });
 
-        // Adjusts the speed of animation
+        // Adjusts the speed of animation, higher is faster
         UI.addSlider("Animation Speed", 0, 100, (double newSpeed) -> Delays.setAnimationSpeed((int) newSpeed));
 
         // Sorting
-        UI.addButton("Bubble Sort", () -> { // TODO: Optimize these sort calls, seems jank
-            heading = "Bubble Sort O(n^2)";
+        UI.addButton("Bubble Sort", () -> {
             try {
                 runAlgorithm(new BubbleSort());
             } catch (Exception e) {
@@ -100,7 +103,6 @@ public final class Visualizer {
             }
         });
         UI.addButton("Insertion Sort", () -> {
-            heading = "Insertion Sort O(n^2)";
             try {
                 runAlgorithm(new InsertionSort());
             } catch (Exception e) {
@@ -108,7 +110,6 @@ public final class Visualizer {
             }
         });
         UI.addButton("Bogo Sort", () -> {
-            heading = "Bogo Sort O(n!)";
             try {
                 runAlgorithm(new BogoSort());
             } catch (Exception e) {
@@ -117,14 +118,14 @@ public final class Visualizer {
         });
 
         // Utilities
-        UI.addButton("Pause", () -> { // TODO: Pause on click
+        UI.addButton("Pause", () -> {
             controller.pauseSort = true;
             channel.allSoundOff();
-            audioThread.interrupt();
             UI.printMessage("Paused");
         });
-        UI.addButton("Resume", () -> { // TODO: Fix sound and UI glitches
-            controller.sorting = true;
+        UI.addButton("Resume", () -> { // TODO: Fix everything
+            controller.pauseSort = false;
+            startAudio();
             startUIThread();
             UI.printMessage("");
         });
@@ -230,15 +231,15 @@ public final class Visualizer {
      * This method does the following:
      * <ol>
      *   <li>Closes any previously opened synthesizer.</li>
-     *   <li>Loads a specific sound font (Perfect Sine.sf2).</li>
-     *   <li>Initializes a synthesizer and opens it.</li>
+     *   <li>Loads sound font (Perfect Sine.sf2).</li>
+     *   <li>Initializes a synth and opens it.</li>
      *   <li>Loads the first instrument from the sound font into the synthesizer.</li>
      *   <li>Sets the loaded instrument for the main MIDI channel.</li>
      *   <li>Turns off the reverb and sustain effects on the main channel.</li>
-     *   <li>Starts an audio thread for managing the note playback.</li>
+     *   <li>Starts the audio thread for managing the note playback.</li>
      * </ol>
      */
-    public static void startAudio() {
+    public static void startAudio() { // TODO: Add and fix sound glitch on sort completion
         if (synth != null && synth.isOpen()) {
             synth.close(); // Close any previously opened synthesizer
         }
@@ -268,7 +269,7 @@ public final class Visualizer {
     }
 
     /**
-     * Initializes and starts the audio thread for playback.
+     * Initializes and starts the audio thread for playback. Pitch and velocity calculations adapted from ArrayV.
      * <p>
      * The audio thread continuously monitors the state of the controller. For each highlighted element, the method calculates:
      * <ul>
@@ -281,7 +282,10 @@ public final class Visualizer {
      * To ensure that only a single note is played at any given time, the loop breaks after starting a note.
      * The thread continues to play notes as long as the controller is sorting.
      * </p>
+     *
+     * @see <a href="https://github.com/Gaming32/ArrayV">ArrayV on GitHub</a>
      */
+
     private static void startAudioThread() {
         audioThread = new Thread(() -> {
             while (controller.sorting) {
@@ -289,18 +293,18 @@ public final class Visualizer {
                 for (int i : controller.highlighted) {
                     if (i != -1) {
                         double normalizedValue = controller.array[Math.min(Math.max(i, 0), controller.numberOfElements - 1)] / (double) controller.numberOfElements;
-                        double calculatedPitch = normalizedValue * (MAXIMUM_PITCH - MINIMUM_PITCH) + MINIMUM_PITCH;
-                        int basePitch = (int) calculatedPitch;
-                        int pitchBendValue = (int) ((calculatedPitch - basePitch) * 8192d) + 8192; // In MIDI, 8192 is the center pitch bend value (no pitch bend)
+                        double pitch = normalizedValue * (MAXIMUM_PITCH - MINIMUM_PITCH) + MINIMUM_PITCH;
+                        int basePitch = (int) pitch;
+                        double pitchBendValue = ((pitch - basePitch) * PITCH_BEND) + PITCH_BEND;
 
                         // Compute MIDI velocity based on pitch difference and number of controller elements.
                         int velocity = (int) (Math.pow(MAXIMUM_PITCH - basePitch, 2d) * Math.pow(controller.numberOfElements, -0.25) * 32d);
-                        channel.setPitchBend(pitchBendValue);
+                        channel.setPitchBend((int) pitchBendValue);
                         channel.noteOn(basePitch, velocity);
-                        break; // Ensure only one note is played. Break after starting a note
+                        break;
                     }
                 }
-                sleep(controller, 1);
+                sleep(controller);
             }
         });
         audioThread.start();
@@ -320,8 +324,9 @@ public final class Visualizer {
      * @throws RuntimeException if an InterruptedException occurs during the completion animation.
      */
     private static void reset() { // TODO: Reset during pause? Don't reset highlight color
-        controller.clearHighlights();
+        synth.close();
         channel.allSoundOff();
+        controller.clearHighlights();
 
         // If we've completed sorting
         if (controller.stopSort || !controller.sorting) {
@@ -342,10 +347,10 @@ public final class Visualizer {
         controller.sorting = false;
         controller.clearHighlights();
         initialize(controller.array);
+        startUIThread();
     }
 
     /**
-     * Initiates an animation to visually indicate the completion of a sorting operation.
      * This method highlights each element in the sorted array in sequence to provide a visual
      * representation of the sorted result.
      */
@@ -354,7 +359,7 @@ public final class Visualizer {
             // Highlight the current element in the sorted array
             controller.highlighted.set(i, i);
             // controller.highlighted.set(0, i);
-            sleep(controller);
+            sleep(controller, 2);
         }
     }
 
@@ -371,8 +376,9 @@ public final class Visualizer {
      * @see Sort
      */
     private static void runAlgorithm(Sort sort) {
-        controller.sorting = true;
         startAudio();
+        controller.sorting = true;
+        heading = sort.getName() + " " + sort.getTimeComplexity();
         sort.runSort(controller);
         controller.sorting = false;
         reset();

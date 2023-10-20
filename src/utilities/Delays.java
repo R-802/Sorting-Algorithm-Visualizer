@@ -7,7 +7,7 @@ import main.Controller;
  */
 final public class Delays {
     // Animation Delays in milliseconds
-    private static final int minAnimationDelay = 0;
+    private static final int minAnimationDelay = 1;
     private static final int maxAnimationDelay = 150;
     private static int animationSpeed = 50;
 
@@ -30,16 +30,14 @@ final public class Delays {
      * and the current animation speed, then multiplied by the provided delayMultiplier.
      *
      * @param delayMultiplier The multiplier for adjusting the delay duration.
-     * @return
      * @throws RuntimeException if the sleep operation is interrupted.
      */
-    public static long sleep(Controller controller, double delayMultiplier) {
+    public static void sleep(Controller controller, double delayMultiplier) {
         try {
             Thread.sleep(sleepTime(controller, delayMultiplier));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return 0;
     }
 
     /**
@@ -69,7 +67,8 @@ final public class Delays {
      */
     private static int interpolateDelay(int numberOfElements) {
         double baseDelay = maxAnimationDelay / Math.sqrt(numberOfElements);
-        return (int) (minAnimationDelay + ((baseDelay - minAnimationDelay) * (animationSpeed / 100.0)));
+        // Decrease the delay as animationSpeed increases
+        return (int) (baseDelay - ((baseDelay - minAnimationDelay) * (animationSpeed / 100.0)));
     }
 
     /*---------------Setters----------------*/

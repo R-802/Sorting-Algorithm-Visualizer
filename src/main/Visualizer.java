@@ -5,6 +5,7 @@ import interfaces.Sort;
 import sorts.BogoSort;
 import sorts.BubbleSort;
 import sorts.InsertionSort;
+import sorts.QuickSort;
 import utilities.Delays;
 import utilities.Operations;
 
@@ -32,7 +33,7 @@ import static utilities.Delays.sleep;
  * - Provides real-time feedback on the sorting process.
  * - Exception handling for robust execution.
  */
-public final class Visualizer {
+public class Visualizer {
     /**
      * Offsets are valid for 1920 x 1080 display
      */
@@ -69,6 +70,7 @@ public final class Visualizer {
         int x = (int) ((screenSize.getWidth() - width) / 2);
         int y = (int) ((screenSize.getHeight() - height) / 2);
         UI.getFrame().setLocation(x / 2, y / 2);
+        UI.getFrame().setTitle("Sorting Algorithm Visualizer v1.0");
 
         // Modify the color of the highlighted elements
         UI.addButton("Highlight Color", () -> {
@@ -105,6 +107,13 @@ public final class Visualizer {
         UI.addButton("Insertion Sort", () -> {
             try {
                 runAlgorithm(new InsertionSort());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        UI.addButton("Quick Sort", () -> {
+            try {
+                runAlgorithm(new QuickSort());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

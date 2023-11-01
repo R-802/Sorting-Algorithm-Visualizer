@@ -97,11 +97,3 @@ The user interface of the Sorting Algorithm Visualizer consists of the following
 - **Utilities**: Use the buttons to pause, resume, reset, or quit the sorting process.
 
 - **Visualization Canvas**: The main area where the sorting process is visually represented.
-
-## Customization
-
-- You can customize the highlight color for sorting elements by clicking the "Highlight Color" button.
-
-- Adjust the number of elements in the array using the "Number of Elements" slider.
-
-- Control the animation speed with the "Animation Speed" slider.
